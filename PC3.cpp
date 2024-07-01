@@ -1,6 +1,6 @@
 #include <iostream>
 #include <WinSock2.h>
-#include<string>
+#include <string>
 
 #define PORT 10010
 #define SERVER_IP "192.168.1.17"  // Replace with your PC's IP
