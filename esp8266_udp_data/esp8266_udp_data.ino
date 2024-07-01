@@ -9,10 +9,10 @@
 MS5837 sensor;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
-const char* ssid = "AndroidAP_1390";         // Replace with your network SSID (name)
-const char* password = "Bazooka4457#";      // Replace with your network password
+const char* ssid = "NCR-2.4G";         // Replace with your network SSID (name)
+const char* password = "choreNCRke";      // Replace with your network password
 
-const char* udpAddress = "192.168.131.17"; // IP address of your PC
+const char* udpAddress = "192.168.1.17"; // IP address of your PC
 const int udpPort = 10010;                // Port on which the PC is listening
 const int esp8266Port = 10011;            // Port on which ESP8266 is listening
 
@@ -39,23 +39,22 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   Wire.begin();
-  // while (!sensor.init()) {
-  //   Serial.println("Init failed!");
-  //   Serial.println("Are SDA/SCL connected correctly?");
-  //   Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
-  //   Serial.println("\n\n\n");
-  //   delay(5000);
-  // }
-  
-  // sensor.setModel(MS5837::MS5837_30BA);
-  // sensor.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
-  
-  if (!bno.begin()) {
-    Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while (1);
+  // Precautionary measure any I2C sensor
+  while (!sensor.init()) {
+    Serial.println("Init failed!");
+    Serial.println("Are SDA/SCL connected correctly?");
+    Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
+    Serial.println("\n\n\n");
+    delay(2000);
   }
-  delay(1000);
-
+  while (!bno.begin()) {
+    Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    delay(2000);
+  }
+  // Bar30 intialisation
+  sensor.setModel(MS5837::MS5837_30BA);
+  sensor.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
+  
   // Start UDP
   udp.begin(esp8266Port);
   Serial.print("Listening on UDP port ");
@@ -68,7 +67,7 @@ void setup() {
 }
 
 void loop() {
-  // sensor.read();
+  sensor.read();
   
   // Check for incoming messages
   int packetSize = udp.parsePacket();
@@ -81,15 +80,13 @@ void loop() {
 
     Serial.printf("Received message from PC: %s\n", incomingPacket);
 
-    // Collect sensor data
-    String message = "";
-    // String message = "Pressure: ";
-    // message += String(sensor.pressure()/1000);
-    // message += " bar, Temperature: ";
-    // message += String(sensor.temperature());
-    // message += " deg C, ";
+    // Collect sensors data
+    String message = "temp-";
+    message += String(sensor.temperature());
+    message += "/pressure-";
+    message += String(sensor.pressure() / 1000);
 
-    sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
+    sensors_event_t orientationData, angVelocityData, linearAccelData, magnetometerData, accelerometerData, gravityData;
     bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
     bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
     bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
@@ -97,30 +94,37 @@ void loop() {
     bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
     bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
 
-    message += formatEvent("Orientation", &orientationData);
-    message += formatEvent("Gyroscope", &angVelocityData);
-    message += formatEvent("Linear Acceleration", &linearAccelData);
-    message += formatEvent("Magnetometer", &magnetometerData);
-    message += formatEvent("Accelerometer", &accelerometerData);
-    message += formatEvent("Gravity", &gravityData);
+    message += "/acc-";
+    message += String(accelerometerData.acceleration.x);
+    message += "/";
+    message += String(accelerometerData.acceleration.y);
+    message += "/";
+    message += String(accelerometerData.acceleration.z);
+
+    message += "/gravity-";
+    message += String(gravityData.acceleration.x);
+    message += "/";
+    message += String(gravityData.acceleration.y);
+    message += "/";
+    message += String(gravityData.acceleration.z);
+
+    message += "/gyro-";
+    message += String(angVelocityData.gyro.x);
+    message += "/";
+    message += String(angVelocityData.gyro.y);
+    message += "/";
+    message += String(angVelocityData.gyro.z);
+
+    message += "/mag-";
+    message += String(magnetometerData.magnetic.x);
+    message += "/";
+    message += String(magnetometerData.magnetic.y);
+    message += "/";
+    message += String(magnetometerData.magnetic.z);
 
     // Send the message to PC
     sendUDPMessage(message.c_str());
   }
-
-  delay(1000);
-}
-
-String formatEvent(const char* type, sensors_event_t* event) {
-  String message = type;
-  message += ": x=";
-  message += String(event->acceleration.x);
-  message += ", y=";
-  message += String(event->acceleration.y);
-  message += ", z=";
-  message += String(event->acceleration.z);
-  message += " ";
-  return message;
 }
 
 void sendUDPMessage(const char* message) {
