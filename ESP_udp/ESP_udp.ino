@@ -1,17 +1,16 @@
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-const char* ssid = "Hell's Gate";         // Replace with your network SSID (name)
-const char* password = "Blossom007"; // Replace with your network password
+const char* ssid = "NCR-2.4G";         // Replace with your network SSID (name)
+const char* password = "choreNCRke";   // Replace with your network password
 
-const char* udpAddress = "192.168.34.17"; // IP address of your PC
-const int udpPort = 10010;                // Port on which the PC is listening
-const int esp32Port = 10011;              // Port on which ESP32 is listening
+const char* udpAddress = "192.168.1.4"; // IP address of your PC
+const int udpPort = 10010;               // Port on which the PC is listening
+const int esp8266Port = 10011;           // Port on which ESP8266 is listening
 
 WiFiUDP udp;
 
-unsigned long previousMillis = 0;
-const long interval = 1000;
+void sendUDPMessage(const char* message);
 
 void setup() {
   // Initialize Serial Monitor
@@ -24,7 +23,6 @@ void setup() {
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
     Serial.print(".");
   }
 
@@ -34,12 +32,12 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   // Start UDP
-  udp.begin(esp32Port);
+  udp.begin(esp8266Port);
   Serial.print("Listening on UDP port ");
-  Serial.println(esp32Port);
+  Serial.println(esp8266Port);
 
-  // Send initial message to PC with ESP32 IP address
-  String initialMessage = "Hello from ESP32. My IP is: ";
+  // Send initial message to PC with ESP8266 IP address
+  String initialMessage = "Hello from ESP8266. My IP is: ";
   initialMessage += WiFi.localIP().toString();
   sendUDPMessage(initialMessage.c_str());
 }
@@ -56,24 +54,16 @@ void loop() {
 
     Serial.printf("Received message from PC: %s\n", incomingPacket);
 
-    // Optionally, send a response back to the PC
-    String response = "ESP32 received: ";
-    response += incomingPacket;
-    sendUDPMessage(response.c_str());
+    // Send the same message back to the PC
+    sendUDPMessage(incomingPacket);
+    //delay(2000);
   }
 
-  // Send a message to the PC every second
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    String message = "Hello from ESP32 at " + String(currentMillis);
-    sendUDPMessage(message.c_str());
-  }
 }
 
 void sendUDPMessage(const char* message) {
   udp.beginPacket(udpAddress, udpPort);
-  udp.printf(message);
+  udp.print(message);
   udp.endPacket();
   Serial.printf("Sent message to PC: %s\n", message);
 }
