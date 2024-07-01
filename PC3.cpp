@@ -3,8 +3,8 @@
 
 #define PORT 10010
 #define SERVER_IP "192.168.34.17"  // Replace with your PC's IP
-#define ESP32_IP "192.168.34.244"   // Replace with your ESP32's IP
-#define ESP32_PORT 10011           // Replace with the port on which ESP32 is listening
+#define ESP8266_IP "192.168.34.140"   // Replace with your ESP8266's IP
+#define ESP8266_PORT 10011           // Replace with the port on which ESP8266 is listening
 
 int main() {
     // Initialize Winsock
@@ -39,11 +39,11 @@ int main() {
     
     std::cout << "Server is listening on " << SERVER_IP << ":" << PORT << std::endl;
 
-    // Setup the address structure for the ESP32
-    sockaddr_in esp32Hint;
-    esp32Hint.sin_addr.s_addr = inet_addr(ESP32_IP);  // IP address of the ESP32
-    esp32Hint.sin_family = AF_INET;
-    esp32Hint.sin_port = htons(ESP32_PORT);  // Port on the ESP32
+    // Setup the address structure for the ESP8266
+    sockaddr_in ESP8266Hint;
+    ESP8266Hint.sin_addr.s_addr = inet_addr(ESP8266_IP);  // IP address of the ESP8266
+    ESP8266Hint.sin_family = AF_INET;
+    ESP8266Hint.sin_port = htons(ESP8266_PORT);  // Port on the ESP8266
 
     // Main loop to receive and send data
     sockaddr_in client;
@@ -68,24 +68,24 @@ int main() {
         // Display message from client
         std::cout << "Message from " << inet_ntoa(client.sin_addr) << ":" << ntohs(client.sin_port) << " - " << buf << std::endl;
 
-        // Send a response to ESP32
+        // Send a response to ESP8266
         std::string response = "Message received: ";
         response += buf;
-        int sendOk = sendto(sock, response.c_str(), response.size() + 1, 0, (sockaddr*)&esp32Hint, sizeof(esp32Hint));
+        int sendOk = sendto(sock, response.c_str(), response.size() + 1, 0, (sockaddr*)&ESP8266Hint, sizeof(ESP8266Hint));
         if (sendOk == SOCKET_ERROR) {
-            std::cerr << "Error sending to ESP32! Error: " << WSAGetLastError() << std::endl;
+            std::cerr << "Error sending to ESP8266! Error: " << WSAGetLastError() << std::endl;
         }
 
-        // Send a message to the ESP32 every second
+        // Send a message to the ESP8266 every second
         DWORD currentMillis = GetTickCount();
         if (currentMillis - previousMillis >= interval) {
             previousMillis = currentMillis;
             std::string message = "Hello from PC at " + std::to_string(currentMillis);
-            int sendOk = sendto(sock, message.c_str(), message.size() + 1, 0, (sockaddr*)&esp32Hint, sizeof(esp32Hint));
+            int sendOk = sendto(sock, message.c_str(), message.size() + 1, 0, (sockaddr*)&ESP8266Hint, sizeof(ESP8266Hint));
             if (sendOk == SOCKET_ERROR) {
-                std::cerr << "Error sending to ESP32! Error: " << WSAGetLastError() << std::endl;
+                std::cerr << "Error sending to ESP8266! Error: " << WSAGetLastError() << std::endl;
             } else {
-                std::cout << "Sent message to ESP32: " << message << std::endl;
+                std::cout << "" << message << std::endl;
             }
         }
     }
