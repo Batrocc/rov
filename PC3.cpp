@@ -2,8 +2,13 @@
 #include <WinSock2.h>
 #include<string>
 #define PORT 10010
+<<<<<<< HEAD
 #define SERVER_IP "192.168.1.108"  // Replace with your PC's IP
 #define ESP8266_IP "192.168.1.110"   // Replace with your ESP8266's IP
+=======
+#define SERVER_IP "192.168.131.17"  // Replace with your PC's IP
+#define ESP8266_IP "192.168.131.140"   // Replace with your ESP8266's IP
+>>>>>>> c92481a3755808fad2e448f21da35e231b204392
 #define ESP8266_PORT 10011           // Replace with the port on which ESP8266 is listening
 
 int main() {
