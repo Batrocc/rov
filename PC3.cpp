@@ -2,7 +2,7 @@
 #include <WinSock2.h>
 
 #define PORT 10010
-#define SERVER_IP "192.168.34.17"  // Replace with your PC's IP
+#define SERVER_IP "192.168.1.111"  // Replace with your PC's IP
 #define ESP32_IP "192.168.34.244"   // Replace with your ESP32's IP
 #define ESP32_PORT 10011           // Replace with the port on which ESP32 is listening
 
