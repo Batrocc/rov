@@ -1,18 +1,25 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include "MS5837.h"
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
+#include <ArduinoOTA.h>
 
 MS5837 sensor;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
-const char* ssid = "NCR-2.4G";         // Replace with your network SSID (name)
-const char* password = "choreNCRke";   // Replace with your network password
+#ifndef STASSID
+#define STASSID "NCR-2.4G"
+#define STAPSK "choreNCRke"
+#endif
 
-const char* udpAddress = "192.168.1.4"; // IP address of your PC
+const char* ssid = STASSID;
+const char* password = STAPSK;
+
+const char* udpAddress = "192.168.1.4";   // IP address of your PC
 const int udpPort = 10010;                // Port on which the PC is listening
 const int esp8266Port = 10011;            // Port on which ESP8266 is listening
 
@@ -39,6 +46,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   Wire.begin();
+
   // Initialize MS5837 sensor
   while (!sensor.init()) {
     Serial.println("Init failed!");
@@ -65,9 +73,53 @@ void setup() {
   String initialMessage = "Hello from ESP8266. My IP is: ";
   initialMessage += WiFi.localIP().toString();
   sendUDPMessage(initialMessage.c_str());
+
+  // OTA setup
+  //---------------------------
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else {  // U_FS
+      type = "filesystem";
+    }
+    Serial.println("Start updating " + type);
+  });
+  
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+  
+  ArduinoOTA.begin();
+  Serial.println("Ready for OTA updates");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
+  //---------------------------
 
 void loop() {
+  ArduinoOTA.handle();
+
+  // Main code begins 
   sensor.read();
 
   // Check for incoming messages
