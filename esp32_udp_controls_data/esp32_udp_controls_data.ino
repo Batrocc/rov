@@ -12,14 +12,14 @@ MS5837 sensor;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 #ifndef STASSID
-#define STASSID "UPRETI"
-#define STAPSK "dhruv101"
+#define STASSID "hi"
+#define STAPSK "hello123"
 #endif
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-const char* udpAddress = "192.168.1.2";   // IP address of your PC
+const char* udpAddress = "192.168.0.108"; // IP address of your PC
 const int udpPort = 10010;                // Port on which the PC is listening
 const int esp32Port = 10011;              // Port on which ESP32 is listening
 
@@ -241,11 +241,11 @@ void loop() {
     message += String(magnetometerData.magnetic.z);
 
     // Receive additional data and append to the message
-    String received = receiveString();
-    if (received.length() > 0) {
-      message += "/";
-      message += received;
-    }
+    // String received = receiveString();
+    // if (received.length() > 0) {
+    //   message += "/";
+    //   message += received;
+    // }
 
     // Send the message to PC
     sendUDPMessage(message.c_str());
